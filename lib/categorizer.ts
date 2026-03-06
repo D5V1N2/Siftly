@@ -8,65 +8,106 @@ const BATCH_SIZE = 20
 
 const DEFAULT_CATEGORIES = [
   {
-    name: 'Funny Memes',
-    slug: 'funny-memes',
-    color: '#f59e0b',
-    description: 'Memes, jokes, humor, funny situations, viral content, satire, comedy, relatable posts',
-    isAiGenerated: false,
-  },
-  {
-    name: 'AI Resources',
+    name: 'AI & Machine Learning',
     slug: 'ai-resources',
     color: '#8b5cf6',
     description:
-      'Artificial intelligence, machine learning, LLMs, ChatGPT, Claude, Gemini, Midjourney, prompts, AI tools, model training, agents, RAG, fine-tuning',
+      'Artificial intelligence, machine learning, LLMs, ChatGPT, Claude, Gemini, Grok, Midjourney, Sora, AI agents, RAG, fine-tuning, prompts, vector databases, model benchmarks, AI startups, AI safety, multimodal models',
     isAiGenerated: false,
   },
   {
-    name: 'Dev Tools',
+    name: 'Crypto & Web3',
+    slug: 'finance-crypto',
+    color: '#f59e0b',
+    description:
+      'Cryptocurrency, Bitcoin, Ethereum, Solana, DeFi protocols, NFTs, on-chain activity, crypto trading, altcoins, airdrops, memecoin, Web3 development, smart contracts, DAOs, Layer 2, Uniswap, pump.fun, wallets, blockchain analytics',
+    isAiGenerated: false,
+  },
+  {
+    name: 'Dev Tools & Engineering',
     slug: 'dev-tools',
     color: '#06b6d4',
     description:
-      'Programming, coding, GitHub, software engineering, frameworks, APIs, open source, terminal, CI/CD, databases, debugging, architecture',
+      'Software engineering, coding, GitHub, open source, frameworks, APIs, databases, DevOps, CI/CD, terminal tools, debugging, system design, backend, frontend, mobile dev, Rust, Go, TypeScript, Python, Vercel, Supabase, Docker',
     isAiGenerated: false,
   },
   {
-    name: 'Design',
+    name: 'Finance & Investing',
+    slug: 'finance-investing',
+    color: '#10b981',
+    description:
+      'Stock market, equities, options trading, macroeconomics, Federal Reserve, interest rates, hedge funds, venture capital, private equity, earnings reports, portfolio management, real estate investing, commodities, forex, financial charts — NOT crypto',
+    isAiGenerated: false,
+  },
+  {
+    name: 'Startups & Business',
+    slug: 'startups-business',
+    color: '#f97316',
+    description:
+      'Startups, founders, entrepreneurship, SaaS, product-market fit, fundraising, VC, angel investing, growth hacking, B2B, marketing, sales, revenue, bootstrapping, Y Combinator, acquisition, company building, business strategy',
+    isAiGenerated: false,
+  },
+  {
+    name: 'News & Politics',
+    slug: 'news',
+    color: '#6366f1',
+    description:
+      'Breaking news, current events, US politics, global politics, geopolitics, government policy, elections, regulation, tech policy, AI regulation, crypto regulation, war and conflict, international relations, journalism, investigative reporting',
+    isAiGenerated: false,
+  },
+  {
+    name: 'Design & Product',
     slug: 'design',
     color: '#ec4899',
     description:
-      'UI/UX design, visual design, typography, product design, Figma, creative tools, color palettes, motion design, branding',
+      'UI/UX design, product design, visual design, Figma, typography, design systems, motion design, brand identity, user research, product strategy, wireframes, creative tools, color theory, web design, app design',
     isAiGenerated: false,
   },
   {
-    name: 'Finance & Crypto',
-    slug: 'finance-crypto',
-    color: '#10b981',
+    name: 'Health & Wellness',
+    slug: 'health-wellness',
+    color: '#14b8a6',
     description:
-      'Finance, cryptocurrency, Bitcoin, Ethereum, DeFi, NFTs, trading, investing, charts, stocks, options, macroeconomics, portfolio',
+      'Fitness, nutrition, longevity, biohacking, sleep, mental health, supplements, workout routines, diet, weight loss, strength training, cognitive performance, stress management, meditation, gut health, lab results, wearables like Whoop and Oura',
+    isAiGenerated: false,
+  },
+  {
+    name: 'Security & Privacy',
+    slug: 'security-privacy',
+    color: '#ef4444',
+    description:
+      'Cybersecurity, hacking, exploits, vulnerabilities, OPSEC, privacy tools, VPNs, encryption, threat intelligence, social engineering, phishing, malware, zero-days, pen testing, CTF, data breaches, authentication, identity security',
+    isAiGenerated: false,
+  },
+  {
+    name: 'Science & Research',
+    slug: 'science-research',
+    color: '#3b82f6',
+    description:
+      'Scientific research, papers, discoveries, physics, biology, neuroscience, space exploration, climate, chemistry, medical breakthroughs, academic studies, emerging technology, robotics, quantum computing, energy, materials science',
     isAiGenerated: false,
   },
   {
     name: 'Productivity',
     slug: 'productivity',
-    color: '#f97316',
+    color: '#a855f7',
     description:
-      'Productivity systems, life hacks, time management, habits, focus, mental models, note-taking, self-improvement, second brain',
+      'Productivity systems, time management, habits, focus techniques, note-taking, second brain, deep work, mental models, PKM tools like Obsidian and Notion, life optimization, workflows, automation, delegation',
     isAiGenerated: false,
   },
   {
-    name: 'News',
-    slug: 'news',
-    color: '#6366f1',
+    name: 'Funny & Memes',
+    slug: 'funny-memes',
+    color: '#eab308',
     description:
-      'Current events, breaking news, politics, tech industry news, announcements, Twitter threads, essays, long-form takes',
+      'Memes, jokes, satire, humor, viral content, relatable posts, shitposts, funny screenshots, comedy threads, parody, ironic takes — content whose primary purpose is to be funny or entertaining',
     isAiGenerated: false,
   },
   {
     name: 'General',
     slug: 'general',
     color: '#64748b',
-    description: "General interest, personal, miscellaneous content that doesn't fit other categories",
+    description: "Miscellaneous content that doesn't clearly fit any other category — use sparingly, only when no other category applies",
     isAiGenerated: false,
   },
 ] as const
@@ -99,10 +140,10 @@ export async function seedDefaultCategories(): Promise<void> {
 
   for (const cat of DEFAULT_CATEGORIES) {
     if (existingSlugs.has(cat.slug)) {
-      // Update description in case it's outdated/empty
+      // Sync name, color, and description so renames/updates propagate to existing DBs
       await prisma.category.update({
         where: { slug: cat.slug },
-        data: { description: cat.description },
+        data: { name: cat.name, color: cat.color, description: cat.description },
       })
     } else {
       await prisma.category.create({ data: { ...cat } })
