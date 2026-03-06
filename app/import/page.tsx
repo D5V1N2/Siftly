@@ -718,25 +718,31 @@ function ImportingStep({ result }: {
   )
 }
 
-function CategorizeStep() {
+function CategorizeStep({ importedCount }: { importedCount: number }) {
   const [status, setStatus] = useState<CategorizeStatus | null>(null)
   const [running, setRunning] = useState(false)
   const [stopping, setStopping] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
 
-  // On mount: check if pipeline is already running, attach or start it.
+  // On mount: attach to running pipeline, or start one if new bookmarks were imported.
+  // importedCount: -1 = direct trigger (not from import), 0 = all skipped, >0 = new bookmarks
   useEffect(() => {
+    // All skipped — nothing to categorize
+    if (importedCount === 0) return
+
     void (async () => {
       try {
         const res = await fetch('/api/categorize')
         const data = await res.json() as CategorizeStatus
         if (data.status === 'running' || data.status === 'stopping') {
+          // Pipeline already in progress — attach to it
           setStatus(data)
           setRunning(true)
           setStopping(data.status === 'stopping')
           pollStatus()
         } else {
+          // Start a fresh pipeline for the newly imported bookmarks
           void startCategorization()
         }
       } catch {
@@ -913,6 +919,26 @@ function CategorizeStep() {
           </Link>
         </div>
       )}
+
+      {/* All bookmarks already existed — nothing new to categorize */}
+      {importedCount === 0 && !running && (
+        <div className="flex flex-col items-center gap-5 py-6">
+          <div className="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center">
+            <CheckCircle size={32} className="text-zinc-500" />
+          </div>
+          <div className="text-center">
+            <p className="text-xl font-bold text-zinc-100">Already up to date</p>
+            <p className="text-zinc-500 text-sm mt-1">All bookmarks in this file were already imported</p>
+          </div>
+          <Link
+            href="/bookmarks"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
+          >
+            View your bookmarks
+            <ChevronRight size={16} />
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
@@ -1017,7 +1043,7 @@ export default function ImportPage() {
             result={importing ? null : importResult}
           />
         )}
-        {step === 3 && <CategorizeStep />}
+        {step === 3 && <CategorizeStep importedCount={importResult ? importResult.imported : -1} />}
       </div>
     </div>
   )
