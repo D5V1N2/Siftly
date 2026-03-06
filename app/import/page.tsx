@@ -17,7 +17,9 @@ interface ImportResult {
 interface CategorizeStatus {
   status: string
   stage: string | null
-  progress: { done: number; total: number }
+  done: number
+  total: number
+  lastError: string | null
 }
 
 // ── Bookmarklet script (captures Twitter/X bookmark API responses as you scroll) ──
@@ -750,7 +752,7 @@ function CategorizeStep() {
     }, 2000)
   }
 
-  const progress = status ? Math.round(((status.progress?.done ?? 0) / Math.max(status.progress?.total ?? 1, 1)) * 100) : 0
+  const progress = status ? Math.round(((status.done ?? 0) / Math.max(status.total ?? 1, 1)) * 100) : 0
 
   return (
     <div className="space-y-6">
@@ -773,11 +775,16 @@ function CategorizeStep() {
             <p className="text-zinc-300 font-medium">
               {status
                 ? status.stage
-                  ? `${status.stage === 'categorize' ? `${status.progress?.done ?? 0} / ${status.progress?.total ?? 0} categorized` : status.stage.replace('_', ' ') + '…'}`
+                  ? `${status.stage === 'categorize' ? `${status.done ?? 0} / ${status.total ?? 0} categorized` : status.stage.replace('_', ' ') + '…'}`
                   : 'Starting…'
                 : 'Starting…'}
             </p>
           </div>
+          {status?.lastError && (
+            <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+              ⚠ {status.lastError}
+            </p>
+          )}
           <Progress.Root className="relative h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
             <Progress.Indicator
               className="h-full bg-indigo-500 transition-all duration-500"
