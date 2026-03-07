@@ -16,17 +16,17 @@ echo -e "${BLUE}  Siftly${NC}"
 echo "  AI-powered bookmark manager"
 echo ""
 
-# ── 1. Install dependencies if needed ─────────────────────────────────────────
-if [ ! -d "node_modules" ]; then
-  echo "  Installing dependencies..."
-  npm install
+# ── 1. Create .env if missing ────────────────────────────────────────────────
+if [ ! -f ".env" ]; then
+  echo '  Creating .env with default DATABASE_URL...'
+  echo 'DATABASE_URL="file:./prisma/dev.db"' > .env
   echo ""
 fi
 
-# ── 2. Create .env if missing ─────────────────────────────────────────────────
-if [ ! -f ".env" ]; then
-  echo "  Creating .env file..."
-  echo 'DATABASE_URL="file:./prisma/dev.db"' > .env
+# ── 2. Install dependencies if needed ─────────────────────────────────────────
+if [ ! -d "node_modules" ]; then
+  echo "  Installing dependencies..."
+  npm install
   echo ""
 fi
 
@@ -54,8 +54,23 @@ else
 fi
 echo ""
 
-# ── 5. Open browser and start ─────────────────────────────────────────────────
-echo "  Starting on http://localhost:3000"
+# ── 5. Start Cloudflare tunnel if token is present ───────────────────────────
+PORT=${PORT:-3000}
+
+# Source tunnel token from .env
+if grep -q "CLOUDFLARE_TUNNEL_TOKEN" .env 2>/dev/null; then
+  CLOUDFLARE_TUNNEL_TOKEN=$(grep "^CLOUDFLARE_TUNNEL_TOKEN=" .env | cut -d= -f2-)
+fi
+
+if [[ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]]; then
+  echo -e "  ${GREEN}✓${NC} Cloudflare tunnel starting in background"
+  cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TUNNEL_TOKEN" &
+  TUNNEL_PID=$!
+  trap "kill $TUNNEL_PID 2>/dev/null" EXIT
+fi
+
+# ── 6. Open browser and start ─────────────────────────────────────────────────
+echo "  Starting on http://localhost:$PORT"
 echo "  Press Ctrl+C to stop"
 echo ""
 
@@ -70,6 +85,6 @@ open_browser() {
   esac
 }
 
-(sleep 2 && open_browser http://localhost:3000) &
+(sleep 2 && open_browser http://localhost:$PORT) &
 
-npx next dev
+npx next dev -p $PORT
