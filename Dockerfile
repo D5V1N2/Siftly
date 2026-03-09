@@ -15,14 +15,16 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN npx prisma generate
 RUN npm run build
 
+# Production image
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=file:/app/data/dev.db
 
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 nextjz
 
 RUN mkdir -p /app/data
 RUN chown nextjs:nodejs /app/data
@@ -35,9 +37,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/app/generated ./app/generated
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
 RUN apk add --no-cache curl
-USER nextjs
+
+USER nextj
+
 EXPOSE 3000
+
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
+CMD ["sh", "-c", "export DATABASE_URL=file:/app/data/dev.db && npx prisma db push --accept-data-loss && node server.js"]
