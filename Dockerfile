@@ -8,7 +8,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 FROM base AS builder
-ENV CACHE_BUST 1741533483
+ENV CACHE_BUST 1741533484
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -18,7 +18,7 @@ RUN npm run build
 
 # Production image
 FROM base AS runner
-ENV CACHE_BUST 1741533483
+ENV CACHE_BUST 1741533484
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -38,6 +38,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/app/generated ./app/generated
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 
 RUN apk add --no-cache curl
 
