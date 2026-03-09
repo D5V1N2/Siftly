@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model Bookmark {
@@ -12,7 +13,7 @@ model Bookmark {
   tweetId       String    @unique
   text          String
   authorHandle  String
-  authorName    String
+  authorName   String
   tweetCreatedAt DateTime?
   importedAt    DateTime  @default(now())
   rawJson       String    // full JSON stored as string
