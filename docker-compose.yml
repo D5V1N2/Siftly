@@ -7,32 +7,30 @@ services:
       dockerfile: Dockerfile
     container_name: siftly
     ports:
-      - "3000"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/dev.db
       - NEXT_TELEMETRY_DISABLED=1
     volumes:
       - siftly-data:/app/data
-    networks:
-      - proxy-net
-      - dokploy-network
     labels:
       - "tsdproxy.enable=true"
       - "tsdproxy.name=siftly"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/stats"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+
+  proxy:
+    image: alpine:
+labels:
+      - "tsdproxy.enable=true"
+      - "tsdproxy.name=siftly-proxy"
+    networks:
+      - siftly-net
+    restart: unless-stopped
 
 volumes:
   siftly-data:
 
 networks:
-  proxy-net:
-    external: true
-  dokploy-network:
+  siftly-net:
     external: true
