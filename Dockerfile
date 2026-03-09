@@ -8,7 +8,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 FROM base AS builder
-ENV CACHE_BUST 1741533485
+ENV CACHE_BUST 1741533486
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -18,7 +18,7 @@ RUN npm run build
 
 # Production image
 FROM base AS runner
-ENV CACHE_BUST 1741533485
+ENV CACHE_BUST 1741533486
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -31,16 +31,13 @@ RUN adduser --system --uid 1001 nextjs
 RUN mkdir -p /app/data
 RUN chown nextjs:nodejs /app/data
 
-# Install prisma globally as root
-RUN npm install -g prisma@7.4.2
-
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/app/generated ./app/generated
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 RUN apk add --no-cache curl
 
@@ -51,4 +48,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "export DATABASE_URL=file:/app/data/dev.db && prisma db push --accept-data-loss && node server.js"]
+CMD ["sh", "-c", "export DATABASE_URL=file:/app/data/dev.db && npx prisma db push --accept-data-loss && node server.js"]
