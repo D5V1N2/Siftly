@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.git
+.gitignore
+.env
+.env.local
+.env.production
+README.md
+prz\/dev.db
+prz\/dev.db-journal
+.next
