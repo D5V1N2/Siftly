@@ -8,6 +8,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 FROM base AS builder
+ENV CACHE_BUST 1741533481
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -17,14 +18,15 @@ RUN npm run build
 
 # Production image
 FROM base AS runner
+ENV CACHE_BUST 1741533481
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=file:/app/data/dev.db
+ENV DATABASE_URL=file://app/data/dev.db
 
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjz
+RUN adduser --system --uid 1001 nextjs
 
 RUN mkdir -p /app/data
 RUN chown nextjs:nodejs /app/data
@@ -45,4 +47,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "export DATABASE_URL=file:/app/data/dev.db && npx prisma db push --accept-data-loss && node server.js"]
+# Initialize database and start server
+CMD ["sh", "-c", "export DATABASE_URL=file://app/data/dev.db && npx prisma db push --accept-data-loss && node server.js"]
